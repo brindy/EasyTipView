@@ -277,7 +277,39 @@ open class EasyTipView: UIView {
     public let icon: Icon?
     
     // MARK: - Lazy variables -
-    
+
+    fileprivate lazy var horizontalIconSize: CGFloat = {
+        guard let icon = icon else { return 0 }
+        switch icon.position {
+        case .left, .right:
+            return icon.image.size.width + preferences.positioning.iconPadding
+
+        case .top, .bottom:
+            return 0
+        }
+    }()
+
+    fileprivate lazy var verticalIconSize: CGFloat = {
+        guard let icon = icon else { return 0 }
+        switch icon.position {
+        case .top, .bottom:
+            return icon.image.size.height + preferences.positioning.iconPadding
+
+        case .left, .right:
+            return 0
+        }
+    }()
+
+    fileprivate lazy var textHorizontalOffset: CGFloat = {
+        guard let icon = icon else { return 0 }
+        return (horizontalIconSize / 2) * (icon.position == .left ? 1 : -1)
+    }()
+
+    fileprivate lazy var textVerticalOffset: CGFloat = {
+        guard let icon = icon else { return 0 }
+        return (verticalIconSize / 2) * (icon.position == .top ? 1 : -1)
+    }()
+
     fileprivate lazy var textSize: CGSize = {
         
         [unowned self] in
@@ -562,16 +594,6 @@ open class EasyTipView: UIView {
         context.strokePath()
     }
 
-    fileprivate lazy var textHorizontalOffset: CGFloat = {
-        guard let icon = icon else { return 0 }
-        return (horizontalIconSize / 2) * (icon.position == .left ? 1 : -1)
-    }()
-
-    fileprivate lazy var textVerticalOffset: CGFloat = {
-        guard let icon = icon else { return 0 }
-        return (verticalIconSize / 2) * (icon.position == .top ? 1 : -1)
-    }()
-
     fileprivate func drawText(_ bubbleFrame: CGRect, context : CGContext) {
         let paragraphStyle = NSMutableParagraphStyle()
         paragraphStyle.alignment = preferences.drawing.textAlignment
@@ -590,10 +612,35 @@ open class EasyTipView: UIView {
         
         text.draw(in: textRect, withAttributes: attributes)
     }
-    
+
+    fileprivate func yOffsetForHorizontalPosition(_ bubbleFrame: CGRect, _ icon: Icon) -> CGFloat {
+        switch icon.alignment {
+        case .topOrLeft:
+            return preferences.positioning.iconPadding
+
+        case .centerOrMiddle:
+            return (contentSize.height / 2) - (icon.image.size.height / 2)
+
+        case .bottomOrRight:
+            return bubbleFrame.size.height - icon.image.size.height - preferences.positioning.iconPadding
+        }
+    }
+
+    fileprivate func xOffsetForVerticalPosition(_ bubbleFrame: CGRect, _ icon: Icon) -> CGFloat {
+        switch icon.alignment {
+        case .topOrLeft:
+            return preferences.positioning.iconPadding
+
+        case .centerOrMiddle:
+            return (contentSize.width / 2) - (icon.image.size.width / 2)
+
+        case .bottomOrRight:
+            return bubbleFrame.size.width - icon.image.size.width - preferences.positioning.iconPadding
+        }
+    }
+
     fileprivate func drawIcon(_ bubbleFrame: CGRect, context: CGContext) {
         guard let icon = icon else { return }
-        guard let cgImage = icon.image.cgImage else { return }
 
         let x: CGFloat
         let y: CGFloat
@@ -601,84 +648,33 @@ open class EasyTipView: UIView {
         switch icon.position {
         case .left:
             x = preferences.positioning.iconPadding
-            switch icon.alignment {
-            case .topOrLeft:
-                y = preferences.positioning.iconPadding
-
-            case .centerOrMiddle:
-                y = (contentSize.height / 2) - (icon.image.size.height / 2)
-
-            case .bottomOrRight:
-                y = bubbleFrame.size.height - icon.image.size.height - preferences.positioning.iconPadding
-            }
+            y = yOffsetForHorizontalPosition(bubbleFrame, icon)
 
         case .right:
             x = bubbleFrame.size.width - icon.image.size.width - preferences.positioning.iconPadding
-            switch icon.alignment {
-            case .topOrLeft:
-                y = preferences.positioning.iconPadding
-
-            case .centerOrMiddle:
-                y = (contentSize.height / 2) - (icon.image.size.height / 2)
-
-            case .bottomOrRight:
-                y = bubbleFrame.size.height - icon.image.size.height - preferences.positioning.iconPadding
-            }
+            y = yOffsetForHorizontalPosition(bubbleFrame, icon)
 
         case .top:
             y = preferences.positioning.iconPadding
-            switch icon.alignment {
-            case .topOrLeft:
-                x = preferences.positioning.iconPadding
-
-            case .centerOrMiddle:
-                x = (contentSize.width / 2) - (icon.image.size.width / 2)
-
-            case .bottomOrRight:
-                x = bubbleFrame.size.width - icon.image.size.width - preferences.positioning.iconPadding
-            }
+            x = xOffsetForVerticalPosition(bubbleFrame, icon)
 
         case .bottom:
             y = bubbleFrame.size.height - icon.image.size.height - preferences.positioning.iconPadding
-            switch icon.alignment {
-            case .topOrLeft:
-                x = preferences.positioning.iconPadding
-
-            case .centerOrMiddle:
-                x = (contentSize.width / 2) - (icon.image.size.width / 2)
-
-            case .bottomOrRight:
-                x = bubbleFrame.size.width - icon.image.size.width - preferences.positioning.iconPadding
-            }
+            x = xOffsetForVerticalPosition(bubbleFrame, icon)
 
         }
 
-        let rect = CGRect(x: bubbleFrame.origin.x + x, y: bubbleFrame.origin.y + y, width: icon.image.size.width, height: icon.image.size.height)
-        context.draw(cgImage, in: rect)
-    }
-    
-    var horizontalIconSize: CGFloat {
-        guard let icon = icon else { return 0 }
-        switch icon.position {
-        case .left, .right:
-            return icon.image.size.width + preferences.positioning.iconPadding
+        let rect = CGRect(x: bubbleFrame.origin.x + x,
+                          y: bubbleFrame.origin.y + y,
+                          width: icon.image.size.width,
+                          height: icon.image.size.height)
 
-        case .top, .bottom:
-            return 0
-        }
+        // use UIImage's draw to ensure correct orientation
+        UIGraphicsPushContext(context)
+        icon.image.draw(in: rect)
+        UIGraphicsPopContext()
     }
-    
-    var verticalIconSize: CGFloat {
-        guard let icon = icon else { return 0 }
-        switch icon.position {
-        case .top, .bottom:
-            return icon.image.size.height + preferences.positioning.iconPadding
 
-        case .left, .right:
-            return 0
-        }
-    }
-        
     override open func draw(_ rect: CGRect) {
         
         let arrowPosition = preferences.drawing.arrowPosition
