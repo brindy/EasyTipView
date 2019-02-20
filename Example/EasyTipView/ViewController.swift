@@ -80,7 +80,7 @@ class ViewController: UIViewController, EasyTipViewDelegate {
             })
         } else {
             let text = "EasyTipView is an easy to use tooltip view. It can point to any UIView or UIBarItem subclasses. Tap the buttons to see other tooltips."
-            let icon = EasyTipView.Icon(image: UIImage(named: "ghost2")!, position: .right, alignment: .topOrLeft)
+            let icon = EasyTipView.Icon(image: UIImage(named: "ghost2")!, position: .bottom, alignment: .topOrLeft)
             let tip = EasyTipView(text: text,
                                   icon: icon,
                                   delegate: self)

@@ -178,6 +178,8 @@ open class EasyTipView: UIView {
             
             case left
             case right
+            case top
+            case bottom
             
         }
 
@@ -562,11 +564,12 @@ open class EasyTipView: UIView {
 
     fileprivate lazy var textHorizontalOffset: CGFloat = {
         guard let icon = icon else { return 0 }
-        return (horizontalIconSize / 2) * (icon.position == .right ? -1 : 1)
+        return (horizontalIconSize / 2) * (icon.position == .left ? 1 : -1)
     }()
 
     fileprivate lazy var textVerticalOffset: CGFloat = {
-        return 0
+        guard let icon = icon else { return 0 }
+        return (verticalIconSize / 2) * (icon.position == .top ? 1 : -1)
     }()
 
     fileprivate func drawText(_ bubbleFrame: CGRect, context : CGContext) {
@@ -598,14 +601,6 @@ open class EasyTipView: UIView {
         switch icon.position {
         case .left:
             x = preferences.positioning.iconPadding
-
-        case .right:
-            x = bubbleFrame.size.width - icon.image.size.width - preferences.positioning.iconPadding
-        }
-
-        switch icon.position {
-        case .left, .right:
-
             switch icon.alignment {
             case .topOrLeft:
                 y = preferences.positioning.iconPadding
@@ -616,9 +611,48 @@ open class EasyTipView: UIView {
             case .bottomOrRight:
                 y = bubbleFrame.size.height - icon.image.size.height - preferences.positioning.iconPadding
             }
-            
+
+        case .right:
+            x = bubbleFrame.size.width - icon.image.size.width - preferences.positioning.iconPadding
+            switch icon.alignment {
+            case .topOrLeft:
+                y = preferences.positioning.iconPadding
+
+            case .centerOrMiddle:
+                y = (contentSize.height / 2) - (icon.image.size.height / 2)
+
+            case .bottomOrRight:
+                y = bubbleFrame.size.height - icon.image.size.height - preferences.positioning.iconPadding
+            }
+
+        case .top:
+            y = preferences.positioning.iconPadding
+            switch icon.alignment {
+            case .topOrLeft:
+                x = preferences.positioning.iconPadding
+
+            case .centerOrMiddle:
+                x = (contentSize.width / 2) - (icon.image.size.width / 2)
+
+            case .bottomOrRight:
+                x = bubbleFrame.size.width - icon.image.size.width - preferences.positioning.iconPadding
+            }
+
+        case .bottom:
+            y = bubbleFrame.size.height - icon.image.size.height - preferences.positioning.iconPadding
+            switch icon.alignment {
+            case .topOrLeft:
+                x = preferences.positioning.iconPadding
+
+            case .centerOrMiddle:
+                x = (contentSize.width / 2) - (icon.image.size.width / 2)
+
+            case .bottomOrRight:
+                x = bubbleFrame.size.width - icon.image.size.width - preferences.positioning.iconPadding
+            }
+
         }
-        
+
         let rect = CGRect(x: bubbleFrame.origin.x + x, y: bubbleFrame.origin.y + y, width: icon.image.size.width, height: icon.image.size.height)
         context.draw(cgImage, in: rect)
     }
@@ -627,12 +661,22 @@ open class EasyTipView: UIView {
         guard let icon = icon else { return 0 }
         switch icon.position {
         case .left, .right:
-            return icon.image.size.width + self.preferences.positioning.iconPadding
+            return icon.image.size.width + preferences.positioning.iconPadding
+
+        case .top, .bottom:
+            return 0
         }
     }
     
     var verticalIconSize: CGFloat {
-        return 0
+        guard let icon = icon else { return 0 }
+        switch icon.position {
+        case .top, .bottom:
+            return icon.image.size.height + preferences.positioning.iconPadding
+
+        case .left, .right:
+            return 0
+        }
     }
         
     override open func draw(_ rect: CGRect) {
