@@ -44,10 +44,10 @@ public extension EasyTipView {
      - parameter preferences: The preferences which will configure the EasyTipView.
      - parameter delegate:    The delegate.
      */
-    public class func show(animated: Bool = true, forItem item: UIBarItem, withinSuperview superview: UIView? = nil, text: String, preferences: Preferences = EasyTipView.globalPreferences, delegate: EasyTipViewDelegate? = nil){
+    public class func show(animated: Bool = true, forItem item: UIBarItem, withinSuperview superview: UIView? = nil, text: String, icon: Icon? = nil, preferences: Preferences = EasyTipView.globalPreferences, delegate: EasyTipViewDelegate? = nil){
         
         if let view = item.view {
-            show(animated: animated, forView: view, withinSuperview: superview, text: text, preferences: preferences, delegate: delegate)
+            show(animated: animated, forView: view, withinSuperview: superview, text: text, icon: icon, preferences: preferences, delegate: delegate)
         }
     }
     
@@ -61,9 +61,9 @@ public extension EasyTipView {
      - parameter preferences: The preferences which will configure the EasyTipView.
      - parameter delegate:    The delegate.
      */
-    public class func show(animated: Bool = true, forView view: UIView, withinSuperview superview: UIView? = nil, text:  String, preferences: Preferences = EasyTipView.globalPreferences, delegate: EasyTipViewDelegate? = nil){
+    public class func show(animated: Bool = true, forView view: UIView, withinSuperview superview: UIView? = nil, text:  String, icon: Icon? = nil, preferences: Preferences = EasyTipView.globalPreferences, delegate: EasyTipViewDelegate? = nil){
         
-        let ev = EasyTipView(text: text, preferences: preferences, delegate: delegate)
+        let ev = EasyTipView(text: text, icon: icon, preferences: preferences, delegate: delegate)
         ev.show(animated: animated, forView: view, withinSuperview: superview)
     }
     
@@ -171,6 +171,34 @@ open class EasyTipView: UIView {
         
         static let allValues = [top, bottom, right, left]
     }
+
+    public struct Icon {
+
+        public enum Position {
+            
+            case left
+            
+        }
+
+        public enum Alignment {
+            
+            case topOrLeft
+            case centerOrMiddle
+            case bottomOrRight
+            
+        }
+        
+        public let image: UIImage
+        public let position: Position
+        public let alignment: Alignment
+        
+        public init(image: UIImage, position: Position, alignment: Alignment) {
+            self.image = image
+            self.position = position
+            self.alignment = alignment
+        }
+        
+    }
     
     public struct Preferences {
         
@@ -193,6 +221,7 @@ open class EasyTipView: UIView {
             public var textHInset           = CGFloat(10)
             public var textVInset           = CGFloat(10)
             public var maxWidth             = CGFloat(200)
+            public var iconPadding          = CGFloat(8)
         }
         
         public struct Animating {
@@ -242,6 +271,7 @@ open class EasyTipView: UIView {
     fileprivate var arrowTip = CGPoint.zero
     fileprivate(set) open var preferences: Preferences
     public let text: String
+    public let icon: Icon?
     
     // MARK: - Lazy variables -
     
@@ -271,9 +301,12 @@ open class EasyTipView: UIView {
         
         [unowned self] in
         
-        var contentSize = CGSize(width: self.textSize.width + self.preferences.positioning.textHInset * 2 + self.preferences.positioning.bubbleHInset * 2, height: self.textSize.height + self.preferences.positioning.textVInset * 2 + self.preferences.positioning.bubbleVInset * 2 + self.preferences.drawing.arrowHeight)
+        let requiredWidth = max(verticalIconSize, horizontalIconSize + textSize.width)
+        let requiredHeight = max(horizontalIconSize, verticalIconSize + textSize.height)
         
-        return contentSize
+        let width = requiredWidth + preferences.positioning.textHInset * 2 + preferences.positioning.bubbleHInset * 2
+        let height = requiredHeight + preferences.positioning.textVInset * 2 + preferences.positioning.bubbleVInset * 2 + preferences.drawing.arrowHeight
+        return CGSize(width: width, height: height)
         }()
     
     // MARK: - Static variables -
@@ -282,8 +315,9 @@ open class EasyTipView: UIView {
     
     // MARK:- Initializer -
     
-    public init (text: String, preferences: Preferences = EasyTipView.globalPreferences, delegate: EasyTipViewDelegate? = nil){
+    public init (text: String, icon: Icon? = nil, preferences: Preferences = EasyTipView.globalPreferences, delegate: EasyTipViewDelegate? = nil){
         
+        self.icon = icon
         self.text = text
         self.preferences = preferences
         self.delegate = delegate
@@ -530,8 +564,13 @@ open class EasyTipView: UIView {
         paragraphStyle.alignment = preferences.drawing.textAlignment
         paragraphStyle.lineBreakMode = NSLineBreakMode.byWordWrapping
         
+        let widthOffset: CGFloat = horizontalIconSize / 2
+        let heightOffset: CGFloat = verticalIconSize / 2
         
-        let textRect = CGRect(x: bubbleFrame.origin.x + (bubbleFrame.size.width - textSize.width) / 2, y: bubbleFrame.origin.y + (bubbleFrame.size.height - textSize.height) / 2, width: textSize.width, height: textSize.height)
+        let textRect = CGRect(x: widthOffset + bubbleFrame.origin.x + (bubbleFrame.size.width - textSize.width) / 2,
+                              y: heightOffset + bubbleFrame.origin.y + (bubbleFrame.size.height - textSize.height) / 2,
+                              width: textSize.width,
+                              height: textSize.height)
         
         #if swift(>=4.2)
         let attributes = [NSAttributedString.Key.font : preferences.drawing.font, NSAttributedString.Key.foregroundColor : preferences.drawing.foregroundColor, NSAttributedString.Key.paragraphStyle : paragraphStyle]
@@ -542,6 +581,49 @@ open class EasyTipView: UIView {
         text.draw(in: textRect, withAttributes: attributes)
     }
     
+    fileprivate func drawIcon(_ bubbleFrame: CGRect, context: CGContext) {
+        guard let icon = icon else { return }
+        guard let cgImage = icon.image.cgImage else { return }
+
+        // TODO adjust by the bubble frame
+        
+        let x: CGFloat
+        let y: CGFloat
+        
+        switch icon.position {
+        case .left:
+            x = preferences.positioning.iconPadding
+            
+            switch icon.alignment {
+            case .topOrLeft:
+                y = preferences.positioning.iconPadding
+
+            case .centerOrMiddle:
+                y = (contentSize.height / 2) - (icon.image.size.height / 2)
+
+            case .bottomOrRight:
+                y = contentSize.height - icon.image.size.height - preferences.positioning.iconPadding
+            }
+            
+        }
+        
+        let rect = CGRect(x: x, y: y, width: icon.image.size.width, height: icon.image.size.height)
+        context.draw(cgImage, in: rect)
+    }
+    
+    var horizontalIconSize: CGFloat {
+        guard let icon = icon else { return 0 }
+        switch icon.position {
+        case .left:
+            return icon.image.size.width + self.preferences.positioning.iconPadding
+        }
+    }
+    
+    var verticalIconSize: CGFloat {
+        guard let icon = icon else { return 0 }
+        return self.preferences.positioning.iconPadding
+    }
+        
     override open func draw(_ rect: CGRect) {
         
         let arrowPosition = preferences.drawing.arrowPosition
@@ -574,6 +656,7 @@ open class EasyTipView: UIView {
         
         drawBubble(bubbleFrame, arrowPosition: preferences.drawing.arrowPosition, context: context)
         drawText(bubbleFrame, context: context)
+        drawIcon(bubbleFrame, context: context)
         
         context.restoreGState()
     }

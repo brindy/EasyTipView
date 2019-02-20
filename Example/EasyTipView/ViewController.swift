@@ -65,9 +65,11 @@ class ViewController: UIViewController, EasyTipViewDelegate {
     
     @IBAction func barButtonAction(sender: UIBarButtonItem) {
         let text = "Tip view for bar button item displayed within the navigation controller's view. Tap to dismiss."
+        let icon = EasyTipView.Icon(image: UIImage(named: "ghost2")!, position: .left, alignment: .topOrLeft)
         EasyTipView.show(forItem: self.navBarItem,
             withinSuperview: self.navigationController?.view,
             text: text,
+            icon: icon,
             delegate : self)
     }
     
@@ -78,7 +80,8 @@ class ViewController: UIViewController, EasyTipViewDelegate {
             })
         } else {
             let text = "EasyTipView is an easy to use tooltip view. It can point to any UIView or UIBarItem subclasses. Tap the buttons to see other tooltips."
-            let tip = EasyTipView(text: text, delegate: self)
+            let icon = EasyTipView.Icon(image: UIImage(named: "ghost2")!, position: .left, alignment: .bottomOrRight)
+            let tip = EasyTipView(text: text, icon: icon, delegate: self)
             tip.show(forItem: toolbarItem)
             tipView = tip
         }
@@ -117,9 +120,11 @@ class ViewController: UIViewController, EasyTipViewDelegate {
             preferences.drawing.arrowPosition = .top
             
             let text = "Tip view inside the navigation controller's view. Tap to dismiss!"
+            let icon = EasyTipView.Icon(image: UIImage(named: "ghost2")!, position: .left, alignment: .bottomOrRight)
             EasyTipView.show(forView: self.buttonB,
                 withinSuperview: self.navigationController?.view,
                 text: text,
+                icon: icon,
                 preferences: preferences)
             
         case buttonC:
