@@ -229,6 +229,8 @@ open class EasyTipView: UIView {
             public var textVInset           = CGFloat(10)
             public var maxWidth             = CGFloat(200)
             public var iconPadding          = CGFloat(8)
+            public var hOffset              = CGFloat(0)
+            public var vOffset              = CGFloat(0)
         }
         
         public struct Animating {
@@ -422,7 +424,10 @@ open class EasyTipView: UIView {
             yOrigin = refViewFrame.y - contentSize.height / 2
         }
         
-        var frame = CGRect(x: xOrigin, y: yOrigin, width: contentSize.width, height: contentSize.height)
+        var frame = CGRect(x: xOrigin + preferences.positioning.hOffset,
+                           y: yOrigin + preferences.positioning.vOffset,
+                           width: contentSize.width,
+                           height: contentSize.height)
         adjustFrame(&frame, forSuperviewFrame: superviewFrame)
         return frame
     }

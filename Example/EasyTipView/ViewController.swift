@@ -120,7 +120,10 @@ class ViewController: UIViewController, EasyTipViewDelegate {
             preferences.animating.showDuration = 1
             preferences.animating.dismissDuration = 1
             preferences.drawing.arrowPosition = .top
-            
+
+            preferences.positioning.hOffset = 50
+            preferences.positioning.vOffset = -10
+
             let text = "Tip view inside the navigation controller's view. Tap to dismiss!"
             let icon = EasyTipView.Icon(image: UIImage(named: "ghost2")!, position: .left, alignment: .bottomOrRight)
             EasyTipView.show(forView: self.buttonB,
@@ -165,6 +168,9 @@ class ViewController: UIViewController, EasyTipViewDelegate {
             preferences.animating.dismissDuration = 1
             
             preferences.positioning.maxWidth = 150
+
+            preferences.positioning.hOffset = -100
+            preferences.positioning.vOffset = 0
             
             let view = EasyTipView(text: "Tip view positioned with the arrow on the right. Tap to dismiss.", preferences: preferences)
             view.show(forView: buttonE, withinSuperview: self.navigationController?.view!)
