@@ -153,6 +153,8 @@ class ViewController: UIViewController, EasyTipViewDelegate {
             preferences.drawing.backgroundColor = buttonE.backgroundColor!
             preferences.drawing.foregroundColor = UIColor.white
             preferences.drawing.textAlignment = NSTextAlignment.center
+            preferences.drawing.shadowOpacity = 0.3
+            preferences.drawing.shadowOffset = CGSize(width: 0, height: 1)
             
             preferences.drawing.arrowPosition = .right
             

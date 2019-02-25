@@ -216,6 +216,10 @@ open class EasyTipView: UIView {
             public var borderWidth         = CGFloat(0)
             public var borderColor         = UIColor.clear
             public var font                = UIFont.systemFont(ofSize: 15)
+            public var shadowOpacity       = Float(0)
+            public var shadowColor         = UIColor.black
+            public var shadowOffset        = CGSize(width: 0, height: -3)
+            public var shadowRadius        = CGFloat(3)
         }
         
         public struct Positioning {
@@ -245,6 +249,9 @@ open class EasyTipView: UIView {
         public var animating    = Animating()
         public var hasBorder : Bool {
             return drawing.borderWidth > 0 && drawing.borderColor != UIColor.clear
+        }
+        public var hasShadow: Bool {
+            return drawing.shadowOpacity > 0
         }
         
         public init() {}
@@ -547,6 +554,19 @@ open class EasyTipView: UIView {
         if preferences.hasBorder {
             drawBorder(contourPath, context: context)
         }
+        
+        if preferences.hasShadow {
+            drawShadow()
+        } else {
+            layer.shadowOpacity = 0
+        }
+    }
+    
+    fileprivate func drawShadow() {
+        layer.shadowOpacity = preferences.drawing.shadowOpacity
+        layer.shadowOffset = preferences.drawing.shadowOffset
+        layer.shadowRadius = preferences.drawing.shadowRadius
+        layer.shadowColor = preferences.drawing.shadowColor.cgColor
     }
     
     fileprivate func drawBubbleBottomShape(_ frame: CGRect, cornerRadius: CGFloat, path: CGMutablePath) {
